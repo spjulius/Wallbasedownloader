@@ -1,5 +1,23 @@
 #!/bin/bash
+#
+# Automatic downloader for wallbase.cc v0.3
+# Copyright (C) 2011 EXio4
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
 
+ 
 ## Version 0.3 [Rearmada]
 ## Cambios de esta version:
 ## No se usan mas bucles
@@ -127,8 +145,26 @@ cant=$(expr $cant + 1)
 done
 return 0
 }
+
+licence() {
+echo "This program under GPL Licence"
+echo " This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>."
+exit 0
+}
+
 menu() {
-echo "WallBase downloader -> 0.3"
+echo "WallBase downloader -> 0.3 By EXio4"
 echo "Vamos a un directorio.."
 if [[ "$1" = "-d" ]]; then
 echo -en "Inserte el directorio: "
@@ -163,6 +199,6 @@ exit 1
 ;;
 esac
 }
+[[ "$1" = "-l" ]] && licence
 menu $@
 download_list
-

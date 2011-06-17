@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Automatic downloader for wallbase.cc v0.3
+# WWD v0.4
 # Copyright (C) 2011 EXio4
 #
 # This program is free software: you can redistribute it and/or modify
@@ -17,6 +17,15 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
+## Version 0.4.1
+## Cambios:
+## Agregado menu de categorias [Al hacer Random en WallBase]
+
+## Version 0.4
+## Se agrego:
+## Soporte de busquedas en Deviantart
+## Cambios minimos:
+## Algunos colores agregados
  
 ## Version 0.3 [Rearmada]
 ## Cambios de esta version:
@@ -43,6 +52,29 @@ wget_list="wget-list.txt"
 option="normal"
 cant=0
 
+## Colores..
+export esc="\033"
+export red="${esc}[31m${esc}[1m" # Rojo
+export green="${esc}[32m${esc}[1m" # Verde
+export yellow="${esc}[33m${esc}[1m" # Amarillo
+export bold="${esc}[1m" # Negrita
+export reset2="${esc}[0m" # Restablecer colores
+
+recho() {
+echo -e "${yellow}>> ${red}${@}${reset2}"
+}
+
+gecho() {
+echo -e "${yellow}>> ${green}${@}${reset2}"
+}
+gprintf() {
+echo -en "${green}${@}${reset2}"
+}
+rprintf() {
+echo -en "${red}${@}${reset2}"
+}
+
+
 normal.reload() {
 wget -O "$file1" "http://wallbase.cc/random" &>/dev/null
 }
@@ -51,11 +83,11 @@ normal.extract2() {
 code=$(cat $1 | grep jpg | grep "<img" | cut -d"'" -f2)
 for i in $code; do
 if [[ "$i" = *${categoria}* ]]; then
-echo "URL: $i"
+gecho "URL: $i"
 echo $i >> $wget_list
 return 0
 else
-echo "URL: $i [Not downloading...]"
+recho "URL: $i [Not downloading...]"
 return 1
 fi
 done
@@ -63,7 +95,7 @@ done
 normal.extract2l() {
 code=$(cat $1 | grep jpg | grep "<img" | cut -d"'" -f2)
 for i in $code; do
-echo "URL: $i"
+gecho "URL: $i"
 echo $i >> $wget_list
 return 0
 
@@ -72,7 +104,7 @@ done
 
 
 normal.extract() {
-echo "WallBase Downloader [NORMAL] running.."
+recho "RandomWallBase running.."
 while true; do
 normal.reload
 wallpapers=$(cat $file1 | grep "<a href=" | grep wallpaper | cut -d"=" -f2 | cut -d"\"" -f2 | grep wallbase) #
@@ -89,30 +121,76 @@ done
 }
 
 download_list() {
-echo "Downloading list of files.."
+gecho "Downloading list of files.."
 for i in $(cat $wget_list); do # Leemos la lista
 if [[ ! -e "$(basename $i)" ]]; then
 wget -O "./$(basename $i)" $i # Bajamos el archivo si existe
 else
-echo "$i already downloaded.." # sino tiramos el "error"
+recho "$i already downloaded.." # sino tiramos el "error"
 fi
 done
 }
 
+deviantart_search() {
+walls=$1
+shift
+search=$1
+[[ -z $search ]] && return 1
+recho "Searching $search in deviantart..."
+wget -O "$file1" "http://browse.deviantart.com/?qh=&section=&q=$search" -U Mozilla &>/dev/null
+lista=$(cat $file1 | grep href | grep "http://"|grep ".deviantart.com/art/" | cut -d"<" -f4|grep href|cut -d'"' -f4)
+cant=0
+for i in $lista; do
+wget -O "$file2" "$i" -U Mozilla &>/dev/null
+url=$(cat $file2 | grep jpg | grep "<img" | grep deviantart | sed -e 's/<.*>//g' | cut -d"=" -f3|cut -d'"' -f2|grep devian)
+for a in $url; do
+[[ "$cant" = "$walls" ]] && break 3
+recho "URL: $a"
+echo "$a" >> $wget_list
+cant=$(expr $cant + 1)
+done
+done
+}
+
+
 menu2.1() {
-echo -en "Inserte la cantidad de wallpapers a bajar: "
+rprintf "Inserte la cantidad de wallpapers a bajar: "
 read cantidad
 [[ -z $cantidad ]] && exit 2
 walls=$cantidad
 if ! [[ "$walls" =~ ^[0-9]+$ ]] ; then
-echo "Introduzca un numero positivo y sin coma.."
+recho "Introduzca un numero positivo y sin coma.."
                exit 3
 fi
+recho "De que categoria?"
+recho "1- high-resolution"
+recho "2- rozne"
+recho "3- manga-anime"
+rprintf ">> "
+read catg
+case $catg in
+1)
+recho "Usando high-resolution.."
+categoria="high-resolution"
+;;
+2)
+recho "Usando rozne.."
+categoria="rozne"
+;;
+3)
+recho "Usando manga-anime.."
+categoria="manga-anime"
+;;
+*)
+recho "Categoria nula o erronea.. usando la default [ $categoria ]"
+;;
+esac
+#categoria="" # Aca puede ir 'high-resolution' 'rozne' 'manga-anime'
 normal.extract
 }
 
 menu2.2() {
-echo -en "Inserte la url: "
+rprintf "Inserte la url: "
 read url
 [[ -z $url ]] && exit 2
 unset categoria
@@ -122,17 +200,17 @@ result=$?
 normal.extract2 $file1
 }
 menu2.3() {
-echo "Que desea buscar?"
-echo -en ">> "
+recho "Que desea buscar?"
+rprintf ">> "
 read search
 [[ -z $search ]] && exit 2
-echo "Bajando la pagina de busquedas.."
+gecho "Bajando la pagina de busquedas.."
 wget -O "$file1" "http://wallbase.cc/search/_${search}_" &> /dev/null
-echo "Cuantos resultados desea bajar?"
-echo -en ">> "
+recho "Cuantos resultados desea bajar?"
+rprintf ">> "
 read cantidad
 if ! [[ "$cantidad" =~ ^[0-9]+$ ]] ; then
-echo "Introduzca un numero positivo y sin coma.."
+recho "Introduzca un numero positivo y sin coma.."
                exit 3
 fi
 cant=0
@@ -145,9 +223,26 @@ cant=$(expr $cant + 1)
 done
 return 0
 }
+menu2.4() {
+recho "Que desea buscar?"
+rprintf ">> "
+read search
+[[ -z $search ]] && exit 2
+recho "Cuantos resultados desea bajar?"
+rprintf ">> "
+read cantidad
+if ! [[ "$cantidad" =~ ^[0-9]+$ ]] ; then
+recho "Introduzca un numero positivo y sin coma.."
+               exit 3
+fi
+deviantart_search "$cantidad" "$search"
+return 0
 
+}
 licence() {
+printf "$red"
 echo "This program under GPL Licence"
+printf "$green"
 echo " This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -160,27 +255,29 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>."
+printf "$reset2"
 exit 0
 }
 
 menu() {
-echo "WallBase downloader -> 0.3 By EXio4"
-echo "Vamos a un directorio.."
+recho "WWD -> 0.4 By EXio4"
+recho "Vamos a un directorio.."
 if [[ "$1" = "-d" ]]; then
-echo -en "Inserte el directorio: "
+gprintf "Inserte el directorio: "
 read path
 cd $path
 result=$?
 if [[ $result != 0 ]]; then
-echo "Hubo un error, compruebe que existe el directorio"
+recho "Hubo un error, compruebe que existe el directorio"
 exit 3
 fi
 fi
-echo "Que desea?"
-echo "1- Bajar wallpapers al azar"
-echo "2- Bajar un wallpaper especifico"
-echo "3- Buscar wallpapers en Wallbase"
-echo -en ">> "
+gecho "Que desea?"
+recho "1- Bajar wallpapers al azar [WallBase]"
+recho "2- Bajar un wallpaper especifico [WallBase]"
+recho "3- Buscar wallpapers en Wallbase"
+recho "4- Buscar wallpapers en Deviantart"
+rprintf ">> "
 read opt
 [[ -z $opt ]] && exit 1
 case $opt in
@@ -193,12 +290,19 @@ menu2.2
 3)
 menu2.3
 ;;
+4)
+menu2.4
+;;
 *)
-echo "Opcion incorrecta"
+recho "Opcion incorrecta"
 exit 1
 ;;
 esac
 }
+
+
+
+
 [[ "$1" = "-l" ]] && licence
 menu $@
 download_list
